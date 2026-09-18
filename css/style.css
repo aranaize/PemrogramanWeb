@@ -1,25 +1,34 @@
-/* Custom Font & Animations */
+/* Custom Typography & Scrollbar Tema Gelap */
 body {
     font-family: 'Roboto', sans-serif;
+    background-color: #0f172a;
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
+
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #4c1d95;
     border-radius: 4px;
 }
 
-/* Animasi Laser Barcode Scanner */
+::-webkit-scrollbar-thumb:hover {
+    background: #6d28d9;
+}
+
+/* Animasi Laser Barcode Emas/Kuning Neon */
 .barcode-laser {
     position: absolute;
     width: 100%;
-    height: 2px;
-    background-color: #ef4444;
-    box-shadow: 0 0 8px 2px #ef4444;
+    height: 3px;
+    background-color: #fbbf24;
+    box-shadow: 0 0 12px 3px #fbbf24;
     animation: scan 1.5s infinite alternate ease-in-out;
 }
 
@@ -28,7 +37,7 @@ body {
     100% { top: 90%; }
 }
 
-/* Stylesheet Khusus Mode Cetak Struk / Print */
+/* Proteksi Tampilan Khusus Cetak Printer (Kertas Putih) */
 @media print {
     body * {
         visibility: hidden;
@@ -41,7 +50,8 @@ body {
         left: 0;
         top: 0;
         width: 100%;
-        background: white;
+        background: white !important;
+        color: black !important;
     }
     .no-print {
         display: none !important;
