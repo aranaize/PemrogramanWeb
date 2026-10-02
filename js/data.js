@@ -1,71 +1,114 @@
-// Database Awal / Default (Menggunakan var untuk mencegah error redeclaration)
-var DEFAULT_BOOKS = [
-    {
-        isbn: "9786020332957",
-        title: "Hujan",
-        author: "Tere Liye",
-        stock: 3,
-        borrowed: 1,
-        cover: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400"
-    },
-    {
-        isbn: "9789792280302",
-        title: "Laskar Pelangi",
-        author: "Andrea Hirata",
-        stock: 5,
-        borrowed: 0,
-        cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400"
-    },
-    {
-        isbn: "9786020633177",
-        title: "Bumi Manusia",
-        author: "Pramoedya Ananta Toer",
-        stock: 2,
-        borrowed: 2,
-        cover: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400"
-    }
-];
+/**
+ * js/data.js - Modul Manajemen & Fetch Data dari Database PHP
+ */
 
-// Helper Mengambil Data Buku dengan Pengaman Try-Catch
-function getStoredBooks() {
+// 1. Mengambil Semua Data dari Server (Read)
+async function fetchData(endpoint = 'get_data.php') {
     try {
-        const books = localStorage.getItem('semesta_books');
-        if (!books) {
-            localStorage.setItem('semesta_books', JSON.stringify(DEFAULT_BOOKS));
-            return DEFAULT_BOOKS;
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return JSON.parse(books);
-    } catch (e) {
-        console.error("Error membaca data buku dari localStorage:", e);
-        return DEFAULT_BOOKS;
-    }
-}
 
-// Helper Menyimpan Data Buku
-function saveBooks(books) {
-    try {
-        localStorage.setItem('semesta_books', JSON.stringify(books));
-    } catch (e) {
-        console.error("Error menyimpan data buku ke localStorage:", e);
-    }
-}
-
-// Helper Mengambil Data Transaksi dengan Pengaman Try-Catch
-function getStoredTransactions() {
-    try {
-        const txs = localStorage.getItem('semesta_transactions');
-        return txs ? JSON.parse(txs) : [];
-    } catch (e) {
-        console.error("Error membaca data transaksi dari localStorage:", e);
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            return result.data;
+        } else {
+            console.error('Gagal mengambil data:', result.message);
+            return [];
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
         return [];
     }
 }
 
-// Helper Menyimpan Data Transaksi
-function saveTransactions(transactions) {
+// 2. Menambah Data Baru ke Database (Create)
+async function createData(payload, endpoint = 'add_data.php') {
     try {
-        localStorage.setItem('semesta_transactions', JSON.stringify(transactions));
-    } catch (e) {
-        console.error("Error menyimpan data transaksi ke localStorage:", e);
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert('Data berhasil ditambahkan!');
+            return true;
+        } else {
+            alert('Gagal menambah data: ' + result.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error creating data:', error);
+        alert('Terjadi kesalahan jaringan.');
+        return false;
+    }
+}
+
+// 3. Mengubah Data (Update)
+async function updateData(id, payload, endpoint = 'update_data.php') {
+    try {
+        const response = await fetch(endpoint, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id, ...payload })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert('Data berhasil diperbarui!');
+            return true;
+        } else {
+            alert('Gagal memperbarui data: ' + result.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error updating data:', error);
+        return false;
+    }
+}
+
+// 4. Menghapus Data (Delete)
+async function deleteData(id, endpoint = 'delete_data.php') {
+    if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+        return false;
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert('Data berhasil dihapus!');
+            return true;
+        } else {
+            alert('Gagal menghapus data: ' + result.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error deleting data:', error);
+        return false;
     }
 }

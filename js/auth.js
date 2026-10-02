@@ -1,75 +1,96 @@
-let isRegisterMode = false;
+/**
+ * js/auth.js - Modul Autentikasi Pengguna
+ */
 
-function toggleAuthMode() {
-    isRegisterMode = !isRegisterMode;
-    const nameField = document.getElementById('name-field');
-    const title = document.getElementById('auth-title');
-    const btn = document.getElementById('auth-btn');
-    const toggleBtn = document.getElementById('auth-toggle-btn');
+// 1. Fungsi Registrasi User Baru
+async function registerUser(username, password, email = '') {
+    try {
+        const response = await fetch('register.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                email: email
+            })
+        });
 
-    if (isRegisterMode) {
-        nameField.classList.remove('hidden');
-        title.innerText = "Register Petugas Baru";
-        btn.innerText = "Daftar";
-        toggleBtn.innerText = "Sudah punya akun? Login";
-    } else {
-        nameField.classList.add('hidden');
-        title.innerText = "Login Petugas";
-        btn.innerText = "Login";
-        toggleBtn.innerText = "Belum punya akun? Register";
-    }
-}
+        const result = await response.json();
 
-function handleAuth(event) {
-    event.preventDefault();
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    const name = document.getElementById('auth-name').value;
-
-    const users = JSON.parse(localStorage.getItem('semesta_staff_users') || '[]');
-
-    if (isRegisterMode) {
-        // Proses Register
-        users.push({ name, email, password });
-        localStorage.setItem('semesta_staff_users', JSON.stringify(users));
-        alert("Registrasi berhasil! Silakan login.");
-        toggleAuthMode();
-    } else {
-        // Proses Login
-        const user = users.find(u => u.email === email && u.password === password) || 
-                     (email === "admin@semestabuku.id" && password === "admin123");
-
-        if (user) {
-            const staffObj = { name: user.name || "Petugas Admin", email: user.email };
-            localStorage.setItem('semesta_current_staff', JSON.stringify(staffObj));
-            checkStaffAuth();
+        if (result.status === 'success') {
+            alert('Registrasi berhasil! Silakan login.');
+            return true;
         } else {
-            alert("Email atau password salah! (Default: admin@semestabuku.id / admin123)");
+            alert('Registrasi gagal: ' + result.message);
+            return false;
         }
+    } catch (error) {
+        console.error('Error saat registrasi:', error);
+        alert('Terjadi kesalahan koneksi ke server.');
+        return false;
     }
 }
 
-function checkStaffAuth() {
-    const staff = localStorage.getItem('semesta_current_staff');
-    const authContainer = document.getElementById('staff-auth-container');
-    const dashboard = document.getElementById('staff-dashboard');
+// 2. Fungsi Login User
+async function loginUser(username, password) {
+    try {
+        const response = await fetch('login.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
 
-    if (staff) {
-        const staffObj = JSON.parse(staff);
-        authContainer.classList.add('hidden');
-        dashboard.classList.remove('hidden');
-        document.getElementById('staff-name-display').innerText = staffObj.name;
-        document.getElementById('staff-email-display').innerText = staffObj.email;
-        document.getElementById('staff-avatar').innerText = staffObj.name.charAt(0).toUpperCase();
-        renderInventoryTable();
-        renderHistoryTable();
-    } else {
-        authContainer.classList.remove('hidden');
-        dashboard.classList.add('hidden');
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            // Simpan data sesi user di browser (localStorage)
+            localStorage.setItem('user_session', JSON.stringify(result.user));
+            alert('Login berhasil! Selamat datang, ' + result.user.username);
+            
+            // Redirect ke halaman dashboard atau index
+            window.location.href = 'index.php';
+            return true;
+        } else {
+            alert('Login gagal: ' + result.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error saat login:', error);
+        alert('Terjadi kesalahan sistem saat mencoba login.');
+        return false;
     }
 }
 
-function logoutStaff() {
-    localStorage.removeItem('semesta_current_staff');
-    checkStaffAuth();
+// 3. Fungsi Logout
+function logoutUser() {
+    // Hapus sesi lokal
+    localStorage.removeItem('user_session');
+    
+    // Opsional: Panggil endpoint PHP untuk membuang session jika menggunakan session_start()
+    fetch('logout.php').finally(() => {
+        alert('Anda telah keluar.');
+        window.location.href = 'index.php';
+    });
+}
+
+// 4. Fungsi Cek Status Login (Guard Halaman)
+function getCurrentUser() {
+    const session = localStorage.getItem('user_session');
+    return session ? JSON.parse(session) : null;
+}
+
+function checkAuth() {
+    const user = getCurrentUser();
+    if (!user) {
+        console.warn('Pengguna belum terautentikasi.');
+        return false;
+    }
+    return true;
 }
